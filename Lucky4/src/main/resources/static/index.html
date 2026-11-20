@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky 4 | Group Profile</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="bg-noise"></div>
+
+<header class="topbar">
+    <div class="brand" id="brand"><span class="brand-star">✦</span> LUCKY <span>4</span></div>
+    <div class="mini-status">NO REAL MONEY • JUST FRIENDS • 100% CHAOS</div>
+</header>
+
+<main class="page">
+    <section class="hero" id="home">
+        <p class="eyebrow">SPRING BOOT • GROUP PROFILE SYSTEM</p>
+        <h1>LUCKY <span>4</span></h1>
+        <p class="tagline">Four faces. One jackpot. Zero guarantees.</p>
+        <p class="intro">Spin the machine and let questionable technology decide who you get to meet.</p>
+        <button class="primary-btn" id="enterBtn">🎰 ENTER LUCKY 4</button>
+    </section>
+
+    <section class="game-section hidden" id="gameSection">
+        <div class="machine-shell">
+            <div class="machine-top">
+                <span class="light">●</span>
+                <span class="machine-title">LUCKY 4 — GROUP JACKPOT</span>
+                <span class="light">●</span>
+            </div>
+
+            <div class="display-panel">
+                <div class="jackpot-label">★ MATCH ALL FOUR ★</div>
+                <div class="reels" id="reels">
+                    <div class="reel"><img src="/images/member1.svg" alt="Member"></div>
+                    <div class="reel"><img src="/images/member2.svg" alt="Member"></div>
+                    <div class="reel"><img src="/images/member3.svg" alt="Member"></div>
+                    <div class="reel"><img src="/images/member4.svg" alt="Member"></div>
+                </div>
+                <div class="result-text" id="resultText">READY WHEN YOU ARE.</div>
+            </div>
+
+            <div class="controls">
+                <button class="spin-btn" id="spinBtn">SPIN!</button>
+                <div class="coin-counter">LUCK: <span id="luckValue">100</span>%</div>
+            </div>
+            <div class="notes">
+                <p class="luck-note" id="luckNote"></p>
+                <p class="streak-note" id="streakNote"></p>
+            </div>
+        </div>
+
+        <div class="result-card hidden" id="profileCard">
+            <div class="result-badge">🎉 JACKPOT 🎉</div>
+            <img class="profile-image" id="profileImage" src="/images/member1.svg" alt="Profile">
+            <div class="profile-content">
+                <p class="small-label">YOU UNLOCKED</p>
+                <h2 id="profileName">Member</h2>
+                <p class="role" id="profileRole">Role</p>
+                <div class="info-grid">
+                    <div><span>COURSE</span><strong id="profileCourse"></strong></div>
+                    <div><span>FAVORITE</span><strong id="profileFavorite"></strong></div>
+                    <div><span>FUN FACT</span><strong id="profileFact"></strong></div>
+                    <div><span>QUOTE</span><strong id="profileQuote"></strong></div>
+                    <div><span>PANIC LEVEL</span><strong id="profilePanic"></strong></div>
+                    <div><span>REPLIES TO CHAT IN</span><strong id="profileReply"></strong></div>
+                    <div class="wide"><span>SUPERPOWER</span><strong id="profileSuperpower"></strong></div>
+                </div>
+            </div>
+            <div class="again-row">
+                <button class="primary-btn spin-again" type="button">🎰 SPIN AGAIN</button>
+                <button class="secondary-btn jump-btn" type="button" data-target="teamSection">👥 MEET THE TEAM</button>
+                <button class="secondary-btn jump-btn" type="button" data-target="bonusSection">🎤 ASK THE GROUP</button>
+            </div>
+        </div>
+
+        <div class="result-card fail hidden" id="failCard">
+            <div class="fail-icon">✖</div>
+            <p class="small-label">NO MATCH</p>
+            <h2 id="failMessage">The universe said NO.</h2>
+            <div class="meme-wrap">
+                <img id="memeImage" src="/media/meme1.svg" alt="Funny result">
+            </div>
+            <p class="meme-caption">The machine has spoken. Try again, brave soul.</p>
+            <div class="again-row">
+                <button class="primary-btn spin-again" type="button">🎰 SPIN AGAIN</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="team hidden" id="teamSection">
+        <div class="section-heading">
+            <p class="eyebrow">THE SUSPECTS</p>
+            <h2>MEET THE TEAM</h2>
+            <p>Don't want to wait for a jackpot? Tap a face to peek at the profile.</p>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+        <div class="section-actions">
+            <button class="primary-btn spin-again" type="button">🎰 SPIN AGAIN</button>
+        </div>
+    </section>
+
+    <section class="bonus hidden" id="bonusSection">
+        <div class="section-heading">
+            <p class="eyebrow">BONUS ROUND</p>
+            <h2>ASK THE GROUP</h2>
+            <p>One question. Four suspects. Absolutely no correct answer.</p>
+        </div>
+        <div class="question-card">
+            <div class="question-number" id="questionNumber">QUESTION #?</div>
+            <h3 id="questionText">Click the button to expose your friends.</h3>
+            <button class="secondary-btn" id="questionBtn">🎤 GET A QUESTION</button>
+        </div>
+        <div class="section-actions">
+            <button class="primary-btn spin-again" type="button">🎰 SPIN AGAIN</button>
+        </div>
+    </section>
+
+    <footer>
+        <p>LUCKY 4 • A Spring Boot Group Profile Project</p>
+        <p class="tiny">No real gambling. No money. Just Java, Spring, and questionable decisions.</p>
+        <p class="tiny">No jackpots were harmed in the making of this website.</p>
+    </footer>
+</main>
+
+<div class="secret hidden" id="secret" role="dialog" aria-modal="true" aria-label="Secret meme">
+    <div class="secret-box">
+        <p class="small-label">YOU FOUND THE SECRET</p>
+        <img id="secretImage" src="/media/meme1.svg" alt="Secret meme">
+        <p class="meme-caption" id="secretCaption"></p>
+        <button class="secondary-btn" id="secretClose" type="button">CLOSE</button>
+    </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

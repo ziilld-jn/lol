@@ -1,0 +1,16 @@
+
+target/
+.vscode/
+*.class
+*.log
+.idea/
+*.iml
+
+# Edited member details and uploaded photos
+data/
+
+# Exclude bundled Java JDK
+src/main/java/com/example/lucky4/controller/oracleJdk-27/
+
+# Exclude bundled JDK installations
+**/oracleJdk-27/

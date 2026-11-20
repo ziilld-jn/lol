@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff4f9a"/><stop offset="1" stop-color="#14111a"/></linearGradient></defs>
+<rect width="600" height="600" fill="#0b0910"/><circle cx="300" cy="300" r="250" fill="url(#g)" opacity=".9"/><circle cx="300" cy="230" r="90" fill="#fff8ef" opacity=".95"/><path d="M160 470 Q300 330 440 470 Q430 540 300 545 Q170 540 160 470Z" fill="#fff8ef" opacity=".95"/><text x="300" y="95" text-anchor="middle" font-family="Arial" font-size="42" font-weight="700" fill="#fff8ef">MEMBER 1</text><text x="300" y="585" text-anchor="middle" font-family="Arial" font-size="22" fill="#fff8ef">REPLACE WITH PHOTO</text>
+</svg>

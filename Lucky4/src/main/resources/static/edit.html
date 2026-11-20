@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Lucky 4 | Edit Team</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .edit-intro { text-align: center; padding: 40px 0 10px; }
+        .edit-intro h1 { font-size: clamp(28px, 5vw, 44px); margin: 0 0 10px; }
+        .edit-intro p { color: var(--muted); max-width: 560px; margin: 0 auto; line-height: 1.6; }
+
+        .gate { width: min(420px, 100%); margin: 40px auto; padding: 28px; border-radius: 18px;
+                background: var(--panel2); border: 1px solid rgba(255,255,255,.08); }
+        .gate label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+        .gate .row { display: flex; gap: 10px; }
+        .gate input { flex: 1; }
+
+        .edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                     gap: 22px; margin: 30px 0 60px; }
+        .edit-card { background: linear-gradient(145deg, #17131d, #0d0b10); border: 1px solid rgba(255,212,92,.25);
+                     border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+        .photo-row { display: flex; gap: 16px; align-items: center; }
+        .photo-row img { width: 110px; height: 110px; object-fit: cover; border-radius: 14px;
+                         border: 2px solid var(--gold); background: #000; flex-shrink: 0; }
+        .photo-row .photo-help { font-size: 12px; color: var(--muted); line-height: 1.5; }
+        .photo-row input[type="file"] { margin-top: 8px; max-width: 100%; color: var(--muted); font-size: 12px; }
+
+        .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+        input[type="text"], input[type="password"], textarea {
+            width: 100%; background: #211b26; color: var(--white); font: inherit; font-size: 14px;
+            padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+        }
+        textarea { min-height: 70px; resize: vertical; }
+        input:focus-visible, textarea:focus-visible, button:focus-visible {
+            outline: 2px solid var(--cyan); outline-offset: 2px;
+        }
+        .card-actions { display: flex; align-items: center; gap: 14px; }
+        .status { font-size: 13px; color: var(--muted); }
+        .status.ok { color: #6ee7a8; }
+        .status.bad { color: var(--danger); }
+        .back-link { color: var(--cyan); text-decoration: none; font-size: 13px; }
+        .back-link:hover { text-decoration: underline; }
+        .save-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 16px;
+                    padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+                    background: linear-gradient(to top, var(--bg) 70%, transparent); margin-bottom: 30px; }
+        .save-bar .status { font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand"><span class="brand-star">✦</span> LUCKY <span>4</span></div>
+    <a class="back-link" href="/">Back to the game</a>
+</header>
+
+<main class="page">
+    <section class="edit-intro">
+        <h1>Edit the team</h1>
+        <p>Change each member's details and photo. Saved changes show up on the game page right away
+           and stay after the server restarts.</p>
+    </section>
+
+    <section class="gate hidden" id="gate">
+        <label for="codeInput">Edit code</label>
+        <div class="row">
+            <input type="password" id="codeInput" autocomplete="off">
+            <button class="secondary-btn" id="codeBtn" type="button">Unlock</button>
+        </div>
+        <p class="status bad" id="gateStatus" role="alert"></p>
+    </section>
+
+    <section class="edit-grid hidden" id="editor"></section>
+
+    <div class="save-bar hidden" id="saveBar">
+        <button class="primary-btn" id="saveAllBtn" type="button">Save all</button>
+        <span class="status" id="saveAllStatus" role="status"></span>
+    </div>
+</main>
+
+<script>
+    const gate = document.getElementById('gate');
+    const editor = document.getElementById('editor');
+    const saveBar = document.getElementById('saveBar');
+    const saveAllBtn = document.getElementById('saveAllBtn');
+    const saveAllStatus = document.getElementById('saveAllStatus');
+    const codeInput = document.getElementById('codeInput');
+    const gateStatus = document.getElementById('gateStatus');
+
+    const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+    const PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+
+    // Limits match the server (MemberStore).
+    const FIELDS = [
+        { key: 'name',     label: 'Name',     max: 60,  multiline: false },
+        { key: 'role',     label: 'Role',     max: 60,  multiline: false },
+        { key: 'course',   label: 'Course',   max: 80,  multiline: false },
+        { key: 'favorite', label: 'Favorite', max: 80,  multiline: false },
+        { key: 'funFact',  label: 'Fun fact', max: 200, multiline: true },
+        { key: 'quote',    label: 'Quote',    max: 200, multiline: true },
+        { key: 'panicLevel', label: 'Panic level', max: 40,  multiline: false },
+        { key: 'replyTime',  label: 'Replies to chat in', max: 60, multiline: false },
+        { key: 'superpower', label: 'Superpower', max: 100, multiline: false }
+    ];
+
+    let editCode = sessionStorage.getItem('lucky4EditCode') || '';
+    let cards = [];
+
+    function authHeaders(extra) {
+        return Object.assign({ 'X-Edit-Code': editCode }, extra || {});
+    }
+
+    async function readJson(response) {
+        try { return await response.json(); } catch (e) { return {}; }
+    }
+
+    async function codeIsValid() {
+        const response = await fetch('/api/edit/check', { headers: authHeaders() });
+        return response.ok;
+    }
+
+    async function unlock() {
+        gateStatus.textContent = '';
+        try {
+            if (await codeIsValid()) {
+                sessionStorage.setItem('lucky4EditCode', editCode);
+                gate.classList.add('hidden');
+                await loadEditor();
+            } else {
+                showGate(editCode ? 'That code is not right. Try again.' : '');
+            }
+        } catch (e) {
+            showGate('Could not reach the server. Is it running?');
+        }
+    }
+
+    function showGate(message) {
+        editor.classList.add('hidden');
+        saveBar.classList.add('hidden');
+        gate.classList.remove('hidden');
+        gateStatus.textContent = message || '';
+        codeInput.focus();
+    }
+
+    document.getElementById('codeBtn').addEventListener('click', () => {
+        editCode = codeInput.value;
+        unlock();
+    });
+    codeInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            editCode = codeInput.value;
+            unlock();
+        }
+    });
+
+    async function loadEditor() {
+        const response = await fetch('/api/members');
+        if (!response.ok) throw new Error('Could not load members');
+        const members = await response.json();
+
+        cards = [];
+        editor.replaceChildren(...members.map(buildCard));
+        editor.classList.remove('hidden');
+        saveBar.classList.remove('hidden');
+    }
+
+    function buildCard(member) {
+        const card = document.createElement('article');
+        card.className = 'edit-card';
+
+        // Photo
+        const photoRow = document.createElement('div');
+        photoRow.className = 'photo-row';
+        const img = document.createElement('img');
+        img.src = member.image;
+        img.alt = 'Photo of ' + member.name;
+        const photoHelp = document.createElement('div');
+        photoHelp.className = 'photo-help';
+        photoHelp.append('Square photos look best. PNG, JPG, GIF or WebP, up to 5 MB.');
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = PHOTO_TYPES.join(',');
+        fileInput.setAttribute('aria-label', 'Choose a photo for ' + member.name);
+        photoHelp.append(document.createElement('br'), fileInput);
+        photoRow.append(img, photoHelp);
+        card.append(photoRow);
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (!PHOTO_TYPES.includes(file.type) || file.size > MAX_PHOTO_BYTES) {
+                setStatus(status, 'Choose a PNG, JPG, GIF or WebP under 5 MB.', 'bad');
+                fileInput.value = '';
+                return;
+            }
+            img.src = URL.createObjectURL(file); // preview only; saved when you press Save
+            setStatus(status, 'New photo ready. Press Save all to keep it.', '');
+        });
+
+        // Text fields
+        const inputs = {};
+        FIELDS.forEach(f => {
+            const wrap = document.createElement('div');
+            wrap.className = 'field';
+            const id = `f-${member.id}-${f.key}`;
+
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.textContent = f.label;
+
+            const input = document.createElement(f.multiline ? 'textarea' : 'input');
+            if (!f.multiline) input.type = 'text';
+            input.id = id;
+            input.maxLength = f.max;
+            input.value = member[f.key] || '';
+            inputs[f.key] = input;
+
+            wrap.append(label, input);
+            card.append(wrap);
+        });
+
+        // Status line for this card. Saving is done by the "Save all" button.
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.setAttribute('role', 'status');
+        actions.append(status);
+        card.append(actions);
+
+        async function save() {
+            setStatus(status, 'Saving...', '');
+
+            const body = {};
+            FIELDS.forEach(f => { body[f.key] = inputs[f.key].value; });
+
+            await send(`/api/edit/members/${member.id}`, {
+                method: 'PUT',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(body)
+            });
+
+            const file = fileInput.files[0];
+            if (file) {
+                const form = new FormData();
+                form.append('photo', file);
+                const saved = await send(`/api/edit/members/${member.id}/photo`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: form
+                });
+                img.src = saved.image;
+                fileInput.value = '';
+            }
+            setStatus(status, 'Saved.', 'ok');
+        }
+
+        cards.push({
+            name: member.name,
+            save,
+            fail: message => setStatus(status, message, 'bad')
+        });
+
+        return card;
+    }
+
+    async function send(url, options) {
+        const response = await fetch(url, options);
+        const data = await readJson(response);
+        if (!response.ok) {
+            const error = new Error(data.error || 'Could not save. Please try again.');
+            error.unauthorized = response.status === 401;
+            throw error;
+        }
+        return data;
+    }
+
+    function setStatus(element, message, kind) {
+        element.textContent = message;
+        element.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    // Save every member, one after another.
+    saveAllBtn.addEventListener('click', async () => {
+        saveAllBtn.disabled = true;
+        setStatus(saveAllStatus, 'Saving all...', '');
+        let saved = 0;
+
+        for (const card of cards) {
+            try {
+                await card.save();
+                saved += 1;
+            } catch (error) {
+                if (error.unauthorized) {
+                    showGate('The edit code was not accepted. Enter it again.');
+                    saveAllBtn.disabled = false;
+                    return;
+                }
+                card.fail(error.message);
+            }
+        }
+
+        if (saved === cards.length) {
+            setStatus(saveAllStatus, `All ${saved} members saved.`, 'ok');
+        } else {
+            setStatus(saveAllStatus,
+                `Saved ${saved} of ${cards.length}. Check the red messages on the other cards.`, 'bad');
+        }
+        saveAllBtn.disabled = false;
+    });
+
+    // On load: use the remembered code (or none, if the server doesn't need one).
+    unlock();
+</script>
+</body>
+</html>
